@@ -167,6 +167,7 @@ const getStats = async (req, res) => {
 
     res.status(200).json({ currencyTotals, monthly, totalRatings, totalTransactions });
   } catch (error) {
+    console.error("Stats error:", error);
     res.status(500).json({ error: error.message });
   }
 };
