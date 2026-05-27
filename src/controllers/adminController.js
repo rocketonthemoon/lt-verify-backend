@@ -4,6 +4,7 @@ const Admin = require("../models/Admin");
 const AdminToken = require("../models/AdminToken");
 const PhoneNumber = require("../models/PhoneNumber");
 const VerificationRequest = require("../models/VerificationRequest");
+const logActivity = require("../utils/logActivity");
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -41,6 +42,10 @@ const adminLogin = async (req, res) => {
     admin.lastLogin = new Date();
     await admin.save();
 
+    // Log activity
+    req.admin = { id: admin._id, username: admin.username, role: admin.role };
+    await logActivity(req, "LOGIN", `Admin ${username} logged in`, { role: admin.role });
+
     res.cookie("lt_admin_jwt", token, COOKIE_OPTS);
     res.status(200).json({
       message: "Login successful",
@@ -52,7 +57,8 @@ const adminLogin = async (req, res) => {
 };
 
 // Logout — clear the cookie
-const adminLogout = (req, res) => {
+const adminLogout = async (req, res) => {
+  await logActivity(req, "LOGOUT", `Admin ${req.admin.username} logged out`);
   res.clearCookie("lt_admin_jwt", { ...COOKIE_OPTS, maxAge: 0 });
   res.status(200).json({ message: "Logged out" });
 };
@@ -96,6 +102,13 @@ const generateAdminToken = async (req, res) => {
     const admin = await Admin.findById(req.admin.id);
     admin.tokensIssued += qty;
     await admin.save();
+
+    // Log activity
+    await logActivity(req, "GENERATE_TOKEN", `Generated ${qty} rating token(s)`, {
+      quantity: qty,
+      purpose,
+      expiresAt,
+    });
 
     res.status(201).json({
       message: `${qty} token(s) generated successfully`,
@@ -171,6 +184,13 @@ const approveVerification = async (req, res) => {
     admin.verificationsApproved += 1;
     await admin.save();
 
+    // Log activity
+    await logActivity(req, "APPROVE_VERIFICATION", `Verified phone number ${verReq.phoneNumber} (${verReq.ownerName})`, {
+      phoneNumber: verReq.phoneNumber,
+      ownerName: verReq.ownerName,
+      tokenGenerated: generateTokens,
+    });
+
     // Generate token if requested
     if (generateTokens) {
       const token = crypto.randomBytes(32).toString("hex");
@@ -230,6 +250,12 @@ const rejectVerification = async (req, res) => {
     admin.verificationsRejected += 1;
     await admin.save();
 
+    // Log activity
+    await logActivity(req, "REJECT_VERIFICATION", `Rejected verification for ${verReq.phoneNumber} (${verReq.ownerName})`, {
+      phoneNumber: verReq.phoneNumber,
+      ownerName: verReq.ownerName,
+    });
+
     res.status(200).json({
       message: "Verification request rejected",
       requestId,
@@ -262,6 +288,12 @@ const deactivateAllTokens = async (req, res) => {
       { isUsed: { $ne: true }, deactivated: { $ne: true }, expiresAt: { $gt: now } },
       { $set: { isUsed: true, deactivated: true, usedAt: now } },
     );
+
+    // Log activity
+    await logActivity(req, "DEACTIVATE_ALL_TOKENS", `Deactivated all active tokens`, {
+      tokensDeactivated: result.modifiedCount,
+    });
+
     res.status(200).json({ message: `${result.modifiedCount} token(s) deactivated` });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -284,6 +316,12 @@ const deactivateToken = async (req, res) => {
     adminToken.usedAt = adminToken.usedAt ?? new Date();
     adminToken.deactivated = true;
     await adminToken.save();
+
+    // Log activity
+    await logActivity(req, "DEACTIVATE_TOKEN", `Deactivated rating token`, {
+      tokenId: adminToken._id,
+      wasUsed: adminToken.isUsed,
+    });
 
     res.status(200).json({ message: "Token deactivated" });
   } catch (error) {
@@ -311,6 +349,14 @@ const createAdmin = async (req, res) => {
 
     const newAdmin = new Admin({ username, email, password, role })
     await newAdmin.save()
+
+    // Log activity
+    await logActivity(req, "CREATE_ADMIN", `Created new admin account ${username} with role ${role}`, {
+      newAdminId: newAdmin._id,
+      newAdminUsername: username,
+      newAdminEmail: email,
+      role,
+    })
 
     res.status(201).json({
       message: 'Admin created successfully',
@@ -353,6 +399,13 @@ const toggleAdminStatus = async (req, res) => {
     admin.isActive = isActive
     await admin.save()
 
+    // Log activity
+    await logActivity(req, "TOGGLE_ADMIN_STATUS", `${isActive ? 'Reactivated' : 'Deactivated'} admin ${admin.username}`, {
+      targetAdminId: admin._id,
+      targetAdminUsername: admin.username,
+      newStatus: isActive ? 'active' : 'inactive',
+    })
+
     res.status(200).json({
       message: `Admin ${isActive ? 'reactivated' : 'deactivated'} successfully`,
       admin: { id: admin._id, username: admin.username, isActive: admin.isActive },
@@ -361,6 +414,35 @@ const toggleAdminStatus = async (req, res) => {
     res.status(500).json({ error: error.message })
   }
 }
+
+// Get activity logs (super_admin only)
+const getActivityLogs = async (req, res) => {
+  try {
+    const AdminActivityLog = require("../models/AdminActivityLog");
+    const { adminId, action, limit = 100, skip = 0 } = req.query;
+
+    const query = {};
+    if (adminId) query.adminId = adminId;
+    if (action) query.action = action;
+
+    const logs = await AdminActivityLog.find(query)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit, 10))
+      .skip(parseInt(skip, 10))
+      .populate("adminId", "username email");
+
+    const total = await AdminActivityLog.countDocuments(query);
+
+    res.status(200).json({
+      logs,
+      total,
+      limit: parseInt(limit, 10),
+      skip: parseInt(skip, 10),
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 module.exports = {
   adminLogin,
@@ -376,4 +458,5 @@ module.exports = {
   createAdmin,
   listAdmins,
   toggleAdminStatus,
+  getActivityLogs,
 };
