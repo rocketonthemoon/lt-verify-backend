@@ -5,6 +5,10 @@ dotenv.config();
 
 const connectDB = async () => {
   try {
+    console.log("Attempting MongoDB connection...");
+    if (!process.env.MONGODB_URI) {
+      throw new Error("MONGODB_URI environment variable is not set");
+    }
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -12,7 +16,13 @@ const connectDB = async () => {
     console.log("✓ MongoDB connected successfully");
   } catch (error) {
     console.error("✗ MongoDB connection failed:", error.message);
-    process.exit(1);
+    console.error("Environment variables:", {
+      MONGODB_URI: process.env.MONGODB_URI ? "set" : "NOT SET",
+      NODE_ENV: process.env.NODE_ENV || "not set",
+    });
+    if (process.env.VERCEL !== "1") {
+      process.exit(1);
+    }
   }
 };
 

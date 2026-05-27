@@ -121,6 +121,8 @@ const addRating = async (req, res) => {
 // Public stats
 const getStats = async (req, res) => {
   try {
+    console.log("Stats endpoint called");
+
     // Totals per currency
     const currencyTotals = await Rating.aggregate([
       { $match: { transactionAmount: { $ne: null }, currency: { $exists: true, $in: ["EUR", "INR"] } } },
@@ -132,6 +134,7 @@ const getStats = async (req, res) => {
         },
       },
     ]);
+    console.log("Currency totals:", currencyTotals);
 
     // Monthly breakdown for the last 12 months (per currency)
     const twelveMonthsAgo = new Date();
@@ -160,6 +163,7 @@ const getStats = async (req, res) => {
       },
       { $sort: { "_id.year": 1, "_id.month": 1 } },
     ]);
+    console.log("Monthly breakdown:", monthly);
 
     // Overall rating counts
     const totalRatings = await Rating.countDocuments();
@@ -167,7 +171,7 @@ const getStats = async (req, res) => {
 
     res.status(200).json({ currencyTotals, monthly, totalRatings, totalTransactions });
   } catch (error) {
-    console.error("Stats error:", error);
+    console.error("Stats error:", error.stack || error.message);
     res.status(500).json({ error: error.message });
   }
 };
