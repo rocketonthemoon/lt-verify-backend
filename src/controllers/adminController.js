@@ -83,7 +83,7 @@ const generateAdminToken = async (req, res) => {
     for (let i = 0; i < qty; i++) {
       const token = crypto.randomBytes(32).toString("hex");
       const adminToken = new AdminToken({
-        token: token.slice(0, 8), // store only display prefix — full token is never persisted
+        token,
         issuedByAdmin: req.admin.id,
         expiresAt,
         purpose,
@@ -329,6 +329,37 @@ const listAdmins = async (req, res) => {
   }
 }
 
+// Deactivate or reactivate admin account (super_admin only)
+const toggleAdminStatus = async (req, res) => {
+  try {
+    const { adminId } = req.params
+    const { isActive } = req.body
+
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({ error: 'isActive must be a boolean' })
+    }
+
+    const admin = await Admin.findById(adminId)
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found' })
+    }
+
+    if (String(admin._id) === String(req.admin.id)) {
+      return res.status(400).json({ error: 'Cannot deactivate your own account' })
+    }
+
+    admin.isActive = isActive
+    await admin.save()
+
+    res.status(200).json({
+      message: `Admin ${isActive ? 'reactivated' : 'deactivated'} successfully`,
+      admin: { id: admin._id, username: admin.username, isActive: admin.isActive },
+    })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
 module.exports = {
   adminLogin,
   adminLogout,
@@ -342,4 +373,5 @@ module.exports = {
   deactivateAllTokens,
   createAdmin,
   listAdmins,
+  toggleAdminStatus,
 };

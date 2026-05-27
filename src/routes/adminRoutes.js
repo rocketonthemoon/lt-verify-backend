@@ -12,6 +12,7 @@ const {
   deactivateAllTokens,
   createAdmin,
   listAdmins,
+  toggleAdminStatus,
 } = require("../controllers/adminController");
 const authMiddleware = require("../middleware/auth");
 const superAdminOnly = require("../middleware/superAdmin");
@@ -36,6 +37,7 @@ router.post("/reject-verification", authMiddleware, rejectVerification);
 router.post("/tokens/deactivate-all", authMiddleware, superAdminOnly, deactivateAllTokens);
 router.post("/admins/create", authMiddleware, superAdminOnly, createAdmin);
 router.get("/admins", authMiddleware, superAdminOnly, listAdmins);
+router.post("/admins/:adminId/toggle-status", authMiddleware, superAdminOnly, toggleAdminStatus);
 
 // Parameterised last
 router.post("/tokens/:id/deactivate", authMiddleware, deactivateToken);
