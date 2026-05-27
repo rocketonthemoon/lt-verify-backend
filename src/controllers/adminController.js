@@ -143,6 +143,7 @@ const approveVerification = async (req, res) => {
       phoneNumber.ownerName = verReq.ownerName;
       phoneNumber.verified = true;
       phoneNumber.verifiedByAdmin = req.admin.id;
+      phoneNumber.vouchedByAdminName = req.admin.username;
       phoneNumber.verificationDate = new Date();
       phoneNumber.status = "verified";
       await phoneNumber.save();
@@ -152,6 +153,7 @@ const approveVerification = async (req, res) => {
         ownerName: verReq.ownerName,
         verified: true,
         verifiedByAdmin: req.admin.id,
+        vouchedByAdminName: req.admin.username,
         verificationDate: new Date(),
         status: "verified",
       });

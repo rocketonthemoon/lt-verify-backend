@@ -21,6 +21,10 @@ const phoneNumberSchema = new mongoose.Schema(
       ref: "Admin",
       default: null,
     },
+    vouchedByAdminName: {
+      type: String,
+      default: null,
+    },
     verificationDate: {
       type: Date,
       default: null,
