@@ -42,6 +42,9 @@ app.use(express.static("public"));
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress;
+  },
 });
 app.use("/api/", limiter);
 
@@ -49,6 +52,9 @@ const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   message: { error: "Too many login attempts. Try again in 15 minutes." },
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress;
+  },
 });
 app.use("/api/admin/login", loginLimiter);
 
