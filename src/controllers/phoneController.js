@@ -36,6 +36,7 @@ const queryPhone = async (req, res) => {
       totalRatings: phone.totalRatings,
       totalTransactions: phone.totalTransactions,
       verifiedByAdmin: phone.verified ? phone.verifiedByAdmin?.username : null,
+      vouchedByAdminName: phone.vouchedByAdminName || null,
       verificationDate: phone.verified ? phone.verificationDate : null,
       recentRatings: recentRatings.map((r) => ({
         reliability: r.reliabilityRating,
