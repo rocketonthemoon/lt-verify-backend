@@ -4,7 +4,8 @@ const Rating = require("../models/Rating");
 // Query phone number reliability
 const queryPhone = async (req, res) => {
   try {
-    const { phoneNumber } = req.query;
+    let { phoneNumber } = req.query;
+    phoneNumber = phoneNumber?.trim().replace(/\s+/g, '');
 
     if (!phoneNumber || !/^\+(?:370\d{8}|91\d{10})$/.test(phoneNumber)) {
       return res.status(400).json({ error: "Phone number must be a valid Lithuanian (+370) or Indian (+91) number" });
@@ -53,7 +54,8 @@ const queryPhone = async (req, res) => {
 // Request to add phone number (must be verified by admin)
 const requestPhoneAddition = async (req, res) => {
   try {
-    const { phoneNumber, ownerName, email, description } = req.body;
+    let { phoneNumber, ownerName, email, description } = req.body;
+    phoneNumber = phoneNumber?.trim().replace(/\s+/g, '');
 
     if (!phoneNumber || !/^\+(?:370\d{8}|91\d{10})$/.test(phoneNumber)) {
       return res.status(400).json({ error: "Phone number must be a valid Lithuanian (+370) or Indian (+91) number" });

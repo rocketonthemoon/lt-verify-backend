@@ -5,7 +5,7 @@ const AdminToken = require("../models/AdminToken");
 // Add rating to a phone number
 const addRating = async (req, res) => {
   try {
-    const {
+    let {
       phoneNumber,
       reliabilityRating,
       timelinessRating,
@@ -14,6 +14,8 @@ const addRating = async (req, res) => {
       comment,
       ratedByPhoneNumber,
     } = req.body;
+
+    phoneNumber = phoneNumber?.trim().replace(/\s+/g, '');
 
     // Validate phone number format (+370 or +91 prefix)
     if (!phoneNumber || !/^\+(?:370\d{8}|91\d{10})$/.test(phoneNumber)) {
