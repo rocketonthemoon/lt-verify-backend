@@ -196,38 +196,7 @@ const getStats = async (req, res) => {
   }
 };
 
-// Get rating activity logs (admin only)
-const getRatingLogs = async (req, res) => {
-  try {
-    const { phoneNumberRated, ratedByPhoneNumber, limit = 100, skip = 0 } = req.query;
-
-    const query = {};
-    if (phoneNumberRated) query.phoneNumberRatedNumber = phoneNumberRated;
-    if (ratedByPhoneNumber) query.ratedByPhoneNumberDigits = ratedByPhoneNumber;
-
-    const logs = await RatingActivityLog.find(query)
-      .sort({ createdAt: -1 })
-      .limit(parseInt(limit, 10))
-      .skip(parseInt(skip, 10))
-      .populate("phoneNumberRated", "phoneNumber ownerName verified")
-      .populate("ratedByPhoneNumber", "phoneNumber ownerName")
-      .populate("ratingAuthToken", "createdAt usedAt");
-
-    const total = await RatingActivityLog.countDocuments(query);
-
-    res.status(200).json({
-      logs,
-      total,
-      limit: parseInt(limit, 10),
-      skip: parseInt(skip, 10),
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
 module.exports = {
   addRating,
   getStats,
-  getRatingLogs,
 };
