@@ -31,4 +31,4 @@ coverage/
 why-this-app.txt
 why_this_app.txt
 dummy.html
-.github/
+.github/.env
