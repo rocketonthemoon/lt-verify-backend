@@ -189,7 +189,18 @@ const getStats = async (req, res) => {
     const totalRatings = await Rating.countDocuments();
     const totalTransactions = await Rating.countDocuments({ transactionAmount: { $ne: null } });
 
-    res.status(200).json({ currencyTotals, monthly, totalRatings, totalTransactions });
+    // Verified users count
+    const verifiedUsers = await PhoneNumber.countDocuments({ verified: true });
+    const totalUsers = await PhoneNumber.countDocuments();
+
+    res.status(200).json({
+      currencyTotals,
+      monthly,
+      totalRatings,
+      totalTransactions,
+      verifiedUsers,
+      totalUsers
+    });
   } catch (error) {
     console.error("Stats error:", error.stack || error.message);
     res.status(500).json({ error: error.message });
