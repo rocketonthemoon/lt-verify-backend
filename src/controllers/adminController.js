@@ -415,35 +415,6 @@ const toggleAdminStatus = async (req, res) => {
   }
 }
 
-// Get activity logs (super_admin only)
-const getActivityLogs = async (req, res) => {
-  try {
-    const AdminActivityLog = require("../models/AdminActivityLog");
-    const { adminId, action, limit = 100, skip = 0 } = req.query;
-
-    const query = {};
-    if (adminId) query.adminId = adminId;
-    if (action) query.action = action;
-
-    const logs = await AdminActivityLog.find(query)
-      .sort({ createdAt: -1 })
-      .limit(parseInt(limit, 10))
-      .skip(parseInt(skip, 10))
-      .populate("adminId", "username email");
-
-    const total = await AdminActivityLog.countDocuments(query);
-
-    res.status(200).json({
-      logs,
-      total,
-      limit: parseInt(limit, 10),
-      skip: parseInt(skip, 10),
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
 module.exports = {
   adminLogin,
   adminLogout,
@@ -458,5 +429,4 @@ module.exports = {
   createAdmin,
   listAdmins,
   toggleAdminStatus,
-  getActivityLogs,
 };
