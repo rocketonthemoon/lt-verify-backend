@@ -58,6 +58,16 @@ const loginLimiter = rateLimit({
 });
 app.use("/api/admin/login", loginLimiter);
 
+// Middleware to ensure MongoDB is connected (for Vercel)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
+
 // Routes
 app.use("/api/phone", phoneRoutes);
 app.use("/api/rating", ratingRoutes);
