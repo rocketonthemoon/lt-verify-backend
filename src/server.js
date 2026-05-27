@@ -17,6 +17,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust Vercel proxy headers
+app.set('trust proxy', 1);
+
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "http://localhost:5173").split(",");
 
 // Middleware
