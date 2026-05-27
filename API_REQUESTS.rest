@@ -1,0 +1,65 @@
+### API Testing Guide
+
+### 1. Admin Login
+POST http://localhost:3000/api/admin/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "SecurePassword123!"
+}
+
+### 2. Generate Admin Tokens (save JWT token from login response as @token)
+POST http://localhost:3000/api/admin/generate-token
+Authorization: Bearer @token
+Content-Type: application/json
+
+{
+  "quantity": 5,
+  "purpose": "rating"
+}
+
+### 3. Request Phone Verification
+POST http://localhost:3000/api/phone/request-verification
+Content-Type: application/json
+
+{
+  "phoneNumber": "+37060123456",
+  "ownerName": "John Doe",
+  "email": "john@example.com",
+  "description": "I want to be verified as a trusted seller"
+}
+
+### 4. Get Pending Verifications (use @token from login)
+GET http://localhost:3000/api/admin/pending-verifications
+Authorization: Bearer @token
+
+### 5. Approve Phone Verification
+POST http://localhost:3000/api/admin/approve-verification
+Authorization: Bearer @token
+Content-Type: application/json
+
+{
+  "requestId": "PASTE_REQUEST_ID_HERE",
+  "generateTokens": false
+}
+
+### 6. Query Phone Number Reliability
+GET http://localhost:3000/api/phone/query?phoneNumber=%2B37060123456
+
+### 7. Add Rating (use token from generate-token response)
+POST http://localhost:3000/api/rating/add
+Content-Type: application/json
+
+{
+  "phoneNumber": "+37060123456",
+  "ratedByPhoneNumber": "+37060999999",
+  "reliabilityRating": 5,
+  "timelinessRating": 4,
+  "transactionAmount": 50,
+  "comment": "Great transaction, very reliable",
+  "token": "PASTE_ADMIN_TOKEN_HERE"
+}
+
+### 8. Health Check
+GET http://localhost:3000/health
