@@ -70,30 +70,29 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-// Start server
-const PORT = process.env.PORT || 3000;
+// Start server (only if not on Vercel)
+if (process.env.VERCEL !== "1") {
+  const PORT = process.env.PORT || 4000;
 
-const startServer = async () => {
-  try {
-    // Connect to MongoDB
-    await connectDB();
+  const startServer = async () => {
+    try {
+      await connectDB();
+      app.listen(PORT, () => {
+        console.log(`✓ Server running on port ${PORT}`);
+        console.log(`✓ Environment: ${process.env.NODE_ENV}`);
+      });
+    } catch (error) {
+      console.error("✗ Failed to start server:", error.message);
+      process.exit(1);
+    }
+  };
 
-    app.listen(PORT, () => {
-      console.log(`✓ Server running on port ${PORT}`);
-      console.log(`✓ Environment: ${process.env.NODE_ENV}`);
-    });
-  } catch (error) {
-    console.error("✗ Failed to start server:", error.message);
-    process.exit(1);
-  }
-};
+  startServer();
 
-startServer();
-
-// Graceful shutdown
-process.on("SIGINT", async () => {
-  console.log("\n✓ Shutting down gracefully...");
-  process.exit(0);
-});
+  process.on("SIGINT", async () => {
+    console.log("\n✓ Shutting down gracefully...");
+    process.exit(0);
+  });
+}
 
 module.exports = app;
